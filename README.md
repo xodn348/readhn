@@ -3,7 +3,7 @@
 <!-- mcp-name: io.github.xodn348/readhn -->
 
 [![PyPI](https://badge.fury.io/py/readhn.svg)](https://pypi.org/project/readhn/)
-[![Tests](https://img.shields.io/badge/tests-82%20passed-brightgreen)](https://github.com/xodn348/HNmcp)
+[![Tests](https://img.shields.io/badge/tests-137%20passed-brightgreen)](https://github.com/xodn348/HNmcp)
 [![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)](https://github.com/xodn348/HNmcp)
 [![MCP](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/v0.1/servers?search=readhn)
 
@@ -22,9 +22,22 @@ AI-native HackerNews MCP Server. Find HN content that matters with explainable q
 ```bash
 # Install
 pip install readhn
+
+# Auto-configure supported AI agents
+readhn setup
 ```
 
-**That's it.** Your AI agent auto-discovers readhn and uses it when you ask HN questions.
+`readhn setup` detects OpenCode, Claude Desktop, Cursor, Cline, and Windsurf config paths and adds the `readhn` MCP server.
+
+Useful setup flags:
+
+```bash
+readhn setup --list              # Show detected agents
+readhn setup --dry-run           # Preview config changes only
+readhn setup --agents "Cursor"  # Configure only specific agents
+```
+
+After setup, your AI agent auto-discovers readhn and uses it when you ask HN questions.
 
 ### Usage
 
