@@ -3,6 +3,8 @@ import re
 from pathlib import Path
 
 from hnmcp.setup import (
+    DEFAULT_EXPERTS,
+    DEFAULT_KEYWORDS,
     _get_config_paths,
     atomic_write_config,
     backup_config,
@@ -10,6 +12,11 @@ from hnmcp.setup import (
     deep_merge,
     detect_installed_agents,
     load_config,
+    main as setup_main,
+    prompt_experts,
+    prompt_keywords,
+    setup_agent,
+    setup_all,
 )
 
 
@@ -329,3 +336,204 @@ def test_atomic_write_config_creates_parent_directories(tmp_path: Path) -> None:
 
     assert path.exists()
     assert json.loads(path.read_text(encoding="utf-8")) == {"ok": True}
+
+
+def test_prompt_experts_returns_defaults_on_empty_input(monkeypatch) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "")
+
+    assert prompt_experts() == DEFAULT_EXPERTS
+
+
+def test_prompt_experts_parses_comma_separated_values(monkeypatch) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "alice, bob , carol")
+
+    assert prompt_experts() == ["alice", "bob", "carol"]
+
+
+def test_prompt_keywords_returns_defaults_on_empty_input(monkeypatch) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "")
+
+    assert prompt_keywords() == DEFAULT_KEYWORDS
+
+
+def test_prompt_keywords_parses_comma_separated_values(monkeypatch) -> None:
+    monkeypatch.setattr("builtins.input", lambda _: "ai, python, startups")
+
+    assert prompt_keywords() == ["ai", "python", "startups"]
+
+
+def test_setup_agent_skips_existing_without_force(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text('{"mcpServers": {"readhn": {"command": "python"}}}', encoding="utf-8")
+
+    modified = setup_agent("Cursor", config, ["a"], ["b"], force=False, dry_run=False)
+
+    assert modified is False
+
+
+def test_setup_agent_force_overwrites_existing(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text('{"mcpServers": {"readhn": {"command": "old"}}}', encoding="utf-8")
+
+    modified = setup_agent("Cursor", config, ["a"], ["b"], force=True, dry_run=False)
+
+    data = json.loads(config.read_text(encoding="utf-8"))
+    assert modified is True
+    assert data["mcpServers"]["readhn"]["command"] == "python"
+
+
+def test_setup_agent_dry_run_does_not_write(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text("{}", encoding="utf-8")
+
+    modified = setup_agent("Cursor", config, ["a"], ["b"], force=False, dry_run=True)
+
+    assert modified is True
+    assert json.loads(config.read_text(encoding="utf-8")) == {}
+
+
+def test_setup_agent_creates_backup_when_writing(tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text("{}", encoding="utf-8")
+
+    _ = setup_agent("Cursor", config, ["a"], ["b"], force=False, dry_run=False)
+
+    backups = list(tmp_path.glob("config.json.backup-*"))
+    assert len(backups) == 1
+
+
+def test_setup_agent_writes_opencode_shape(tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text("{}", encoding="utf-8")
+
+    modified = setup_agent("OpenCode", config, ["alice"], ["ai"], force=False, dry_run=False)
+
+    data = json.loads(config.read_text(encoding="utf-8"))
+    assert modified is True
+    assert data["mcp"]["readhn"]["type"] == "local"
+
+
+def test_setup_agent_is_idempotent_without_force(tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text("{}", encoding="utf-8")
+
+    first = setup_agent("Cursor", config, ["alice"], ["ai"], force=False, dry_run=False)
+    second = setup_agent("Cursor", config, ["alice"], ["ai"], force=False, dry_run=False)
+
+    assert first is True
+    assert second is False
+
+
+def test_setup_all_returns_one_when_no_agents(monkeypatch) -> None:
+    monkeypatch.setattr("hnmcp.setup.detect_installed_agents", lambda: {})
+
+    code = setup_all(None, ["a"], ["b"], force=False, dry_run=False)
+
+    assert code == 1
+
+
+def test_setup_all_filters_requested_agents(monkeypatch, tmp_path: Path) -> None:
+    cursor = tmp_path / "cursor.json"
+    open_code = tmp_path / "opencode.json"
+    monkeypatch.setattr(
+        "hnmcp.setup.detect_installed_agents", lambda: {"Cursor": cursor, "OpenCode": open_code}
+    )
+
+    calls: list[str] = []
+
+    def _fake_setup(name, *_args, **_kwargs):
+        calls.append(name)
+        return True
+
+    monkeypatch.setattr("hnmcp.setup.setup_agent", _fake_setup)
+
+    code = setup_all(["Cursor"], ["a"], ["b"], force=False, dry_run=False)
+
+    assert code == 0
+    assert calls == ["Cursor"]
+
+
+def test_setup_all_prompts_when_values_missing(monkeypatch, tmp_path: Path) -> None:
+    cursor = tmp_path / "cursor.json"
+    monkeypatch.setattr("hnmcp.setup.detect_installed_agents", lambda: {"Cursor": cursor})
+    monkeypatch.setattr("hnmcp.setup.prompt_experts", lambda: ["e1"])
+    monkeypatch.setattr("hnmcp.setup.prompt_keywords", lambda: ["k1"])
+
+    captured: dict[str, list[str]] = {}
+
+    def _fake_setup(_name, _path, experts, keywords, _force, _dry_run):
+        captured["experts"] = experts
+        captured["keywords"] = keywords
+        return True
+
+    monkeypatch.setattr("hnmcp.setup.setup_agent", _fake_setup)
+
+    code = setup_all(None, None, None, force=False, dry_run=False)
+
+    assert code == 0
+    assert captured == {"experts": ["e1"], "keywords": ["k1"]}
+
+
+def test_setup_all_uses_provided_values_without_prompt(monkeypatch, tmp_path: Path) -> None:
+    cursor = tmp_path / "cursor.json"
+    monkeypatch.setattr("hnmcp.setup.detect_installed_agents", lambda: {"Cursor": cursor})
+
+    def _fail_prompt() -> list[str]:
+        raise AssertionError("prompt should not be called")
+
+    monkeypatch.setattr("hnmcp.setup.prompt_experts", _fail_prompt)
+    monkeypatch.setattr("hnmcp.setup.prompt_keywords", _fail_prompt)
+    monkeypatch.setattr("hnmcp.setup.setup_agent", lambda *_args, **_kwargs: True)
+
+    code = setup_all(None, ["e"], ["k"], force=False, dry_run=False)
+
+    assert code == 0
+
+
+def test_main_list_flag_prints_agents_and_exits(monkeypatch, tmp_path: Path, capsys) -> None:
+    cursor = tmp_path / "cursor.json"
+    monkeypatch.setattr("hnmcp.setup.detect_installed_agents", lambda: {"Cursor": cursor})
+    monkeypatch.setattr("sys.argv", ["readhn setup", "--list"])
+
+    setup_main()
+    output = capsys.readouterr().out
+    assert "Cursor" in output
+
+
+def test_main_parses_agents_experts_keywords(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "readhn setup",
+            "--agents",
+            "Cursor,OpenCode",
+            "--experts",
+            "a,b",
+            "--keywords",
+            "k1,k2",
+            "--force",
+            "--dry-run",
+        ],
+    )
+
+    captured = {}
+
+    def _fake_setup_all(agent_filter, experts, keywords, force, dry_run):
+        captured["agent_filter"] = agent_filter
+        captured["experts"] = experts
+        captured["keywords"] = keywords
+        captured["force"] = force
+        captured["dry_run"] = dry_run
+        return 0
+
+    monkeypatch.setattr("hnmcp.setup.setup_all", _fake_setup_all)
+
+    setup_main()
+
+    assert captured == {
+        "agent_filter": ["Cursor", "OpenCode"],
+        "experts": ["a", "b"],
+        "keywords": ["k1", "k2"],
+        "force": True,
+        "dry_run": True,
+    }

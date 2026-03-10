@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import shutil
@@ -15,6 +16,9 @@ AGENTS = {
     "Windsurf": {"config_key": "mcpServers", "format": "claude"},
     "OpenCode": {"config_key": "mcp", "format": "opencode"},
 }
+
+DEFAULT_EXPERTS = ["patio11", "tptacek", "simonw"]
+DEFAULT_KEYWORDS = ["ai", "python", "startups"]
 
 
 def _get_config_paths(agent: str) -> list[Path]:
@@ -140,3 +144,133 @@ def atomic_write_config(path: Path, data: dict[str, Any]) -> None:
     finally:
         if os.path.exists(tmp_name):
             os.unlink(tmp_name)
+
+
+def _parse_csv(value: str) -> list[str]:
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def prompt_experts() -> list[str]:
+    raw = input(
+        f"Seed experts (comma-separated, Enter for defaults: {', '.join(DEFAULT_EXPERTS)}): "
+    ).strip()
+    return _parse_csv(raw) if raw else DEFAULT_EXPERTS
+
+
+def prompt_keywords() -> list[str]:
+    raw = input(
+        f"Default keywords (comma-separated, Enter for defaults: {', '.join(DEFAULT_KEYWORDS)}): "
+    ).strip()
+    return _parse_csv(raw) if raw else DEFAULT_KEYWORDS
+
+
+def setup_agent(
+    agent_name: str,
+    config_path: Path,
+    experts: list[str],
+    keywords: list[str],
+    force: bool,
+    dry_run: bool,
+) -> bool:
+    agent_meta = AGENTS[agent_name]
+    config_key = str(agent_meta["config_key"])
+    fmt = str(agent_meta["format"])
+
+    config = load_config(config_path)
+    existing = config.get(config_key, {})
+    if not isinstance(existing, dict):
+        existing = {}
+
+    if "readhn" in existing and not force:
+        print(f"- {agent_name}: readhn already configured, skipping (use --force to overwrite)")
+        return False
+
+    update = {config_key: {"readhn": create_readhn_entry(fmt, experts, keywords)}}
+    merged = deep_merge(config, update)
+
+    if dry_run:
+        print(f"- {agent_name}: would update {config_path}")
+        print(json.dumps(merged, indent=2))
+        return True
+
+    backup = backup_config(config_path)
+    if backup is not None:
+        print(f"- {agent_name}: backup created at {backup}")
+
+    try:
+        atomic_write_config(config_path, merged)
+    except OSError as exc:
+        print(f"- {agent_name}: failed to write config: {exc}")
+        return False
+
+    validated = load_config(config_path)
+    if not validated:
+        print(f"- {agent_name}: write failed validation")
+        return False
+
+    print(f"- {agent_name}: configured at {config_path}")
+    return True
+
+
+def setup_all(
+    agent_filter: Optional[list[str]],
+    experts: Optional[list[str]],
+    keywords: Optional[list[str]],
+    force: bool,
+    dry_run: bool,
+) -> int:
+    detected = detect_installed_agents()
+    if not detected:
+        print(
+            "No supported AI agents detected. Install one of: Claude Desktop, Cursor, Cline, Windsurf, OpenCode."
+        )
+        return 1
+
+    selected = detected
+    if agent_filter:
+        selected = {name: path for name, path in detected.items() if name in set(agent_filter)}
+        if not selected:
+            print("No matching agents found for --agents filter.")
+            return 1
+
+    final_experts = experts if experts is not None else prompt_experts()
+    final_keywords = keywords if keywords is not None else prompt_keywords()
+
+    updated = 0
+    for agent_name, config_path in selected.items():
+        if setup_agent(agent_name, config_path, final_experts, final_keywords, force, dry_run):
+            updated += 1
+
+    print(f"Setup complete: updated {updated}/{len(selected)} agent configs.")
+    return 0
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="readhn setup", description="Configure readhn MCP for supported AI agents"
+    )
+    parser.add_argument("--agents", help="Comma-separated agent names to configure")
+    parser.add_argument("--experts", help="Comma-separated expert seed usernames")
+    parser.add_argument("--keywords", help="Comma-separated default keywords")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing readhn config")
+    parser.add_argument("--list", action="store_true", help="List detected agents and config paths")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview config updates without writing"
+    )
+
+    args = parser.parse_args()
+
+    if args.list:
+        detected = detect_installed_agents()
+        if not detected:
+            print("No supported AI agents detected.")
+            return
+        for name, path in detected.items():
+            print(f"{name}: {path}")
+        return
+
+    agent_filter = _parse_csv(args.agents) if args.agents else None
+    experts = _parse_csv(args.experts) if args.experts else None
+    keywords = _parse_csv(args.keywords) if args.keywords else None
+
+    setup_all(agent_filter, experts, keywords, force=args.force, dry_run=args.dry_run)
