@@ -1,5 +1,7 @@
 # hnmcp
 
+<!-- mcp-name: io.github.xodn348/hnmcp -->
+
 AI-native HackerNews MCP Server. Filter HN through your lens with trust-based expert ranking and explainable quality signals.
 
 ## Why
@@ -21,33 +23,42 @@ hnmcp does three things:
 ## Quick Start
 
 ```bash
-# Install
-pip install -e .
+# Install from PyPI
+pip install hnmcp
 
 # Optional: with semantic search
-pip install -e ".[embeddings]"
+pip install hnmcp[embeddings]
 ```
 
-Add to Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+**That's it!** Your AI agents (Claude Code, OpenCode, Codex) will auto-discover hnmcp from the MCP Registry.
+
+### Configuration (Optional)
+
+Set environment variables to customize:
+
+```bash
+export HN_KEYWORDS="ai,python,startups"
+export HN_MIN_SCORE="50"
+export HN_EXPERTS="patio11,tptacek,simonw"
+export HN_TIME_HOURS="24"
+```
+
+Or configure manually in your agent's MCP config:
 
 ```json
 {
   "mcpServers": {
-    "hackernews": {
+    "hnmcp": {
       "command": "python",
       "args": ["-m", "hnmcp"],
       "env": {
-        "HN_KEYWORDS": "ai,python,startups",
-        "HN_MIN_SCORE": "50",
-        "HN_EXPERTS": "patio11,tptacek,simonw",
-        "HN_TIME_HOURS": "24"
+        "HN_KEYWORDS": "ai,python",
+        "HN_EXPERTS": "patio11,tptacek"
       }
     }
   }
 }
 ```
-
-**Migration from v1**: Update your config to use `python -m hnmcp` instead of the old single-file path.
 
 ## Tools
 

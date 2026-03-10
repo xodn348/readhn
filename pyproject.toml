@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "xodn348"}
 ]
 keywords = ["hackernews", "mcp", "ai", "filtering", "knowledge"]
 classifiers = [
@@ -46,9 +46,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/hnmcp"
-Repository = "https://github.com/yourusername/hnmcp"
-Issues = "https://github.com/yourusername/hnmcp/issues"
+Homepage = "https://github.com/xodn348/HNmcp"
+Repository = "https://github.com/xodn348/HNmcp"
+Issues = "https://github.com/xodn348/HNmcp/issues"
 
 [project.scripts]
 hnmcp = "hnmcp.server:main"
