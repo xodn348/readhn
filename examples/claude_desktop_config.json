@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "hackernews": {
+      "command": "python",
+      "args": ["-m", "hnmcp"],
+      "env": {
+        "HN_KEYWORDS": "ai,machine learning,startups,python,rust",
+        "HN_MIN_SCORE": "50",
+        "HN_EXPERTS": "patio11,simonw,tptacek,dang,cperciva",
+        "HN_TIME_HOURS": "24"
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+Verification checklist
+
+1) Lazy import verified
+- test_import_without_deps guards against importing sentence_transformers during module import.
+
+2) Helpful missing-dependency error verified
+- test_graceful_degradation checks ImportError message includes:
+  Install with: pip install hnmcp[embeddings]
+
+3) Session-only behavior verified
+- test_session_only confirms a new EmbeddingStore instance does not contain vectors from previous instance.
+- test_session_only also confirms no files are created in tmp_path during embedding operations.
+
+4) Diagnostics and syntax verification
+- lsp_diagnostics (severity=error) reports no diagnostics for:
+  hnmcp/embeddings.py
+  tests/test_embeddings.py
+- python -m compileall hnmcp completed without errors.

@@ -1,0 +1,46 @@
+{
+  "name": "AI/ML Engineer Profile",
+  "description": "Profile for engineers focused on AI, machine learning, and LLM development",
+  "keywords": [
+    "ai",
+    "machine learning",
+    "llm",
+    "gpt",
+    "transformers",
+    "pytorch",
+    "deep learning",
+    "neural networks"
+  ],
+  "min_score": 30,
+  "experts": [
+    "simonw",
+    "karpathy",
+    "jeffdean",
+    "fchollet",
+    "tptacek"
+  ],
+  "time_hours": 48,
+  "focus": "practical",
+  "domains": {
+    "ai_ml": {
+      "keywords": ["ai", "machine learning", "llm", "gpt", "transformers"],
+      "experts": ["simonw", "karpathy", "jeffdean", "fchollet"],
+      "min_score": 30
+    },
+    "security": {
+      "keywords": ["security", "cryptography", "vulnerability"],
+      "experts": ["tptacek", "cperciva"],
+      "min_score": 40
+    },
+    "startups": {
+      "keywords": ["startup", "saas", "business", "monetization"],
+      "experts": ["patio11", "sama"],
+      "min_score": 50
+    },
+    "rust": {
+      "keywords": ["rust", "cargo", "wasm", "systems programming"],
+      "experts": ["steveklabnik", "withoutboats", "burntsushi"],
+      "min_score": 20
+    }
+  }
+}

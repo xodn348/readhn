@@ -1,0 +1,90 @@
+# Task 2: Test Infrastructure + Shared Fixtures - COMPLETED
+
+## Deliverables
+
+### 1. Directory Structure ✓
+- tests/__init__.py (created)
+- tests/conftest.py (created with 8 fixtures + SIGNALS_SCHEMA)
+- tests/test_cache.py (stub)
+- tests/test_profiles.py (stub)
+- tests/test_quality.py (stub)
+- tests/test_trust.py (stub)
+- tests/test_embeddings.py (stub)
+- tests/test_server.py (stub)
+
+### 2. Fixtures Implemented ✓
+
+All 8 fixtures defined in tests/conftest.py:
+
+1. mock_story
+   - HN story dict with: id, title, score, by, descendants, time, kids, url, text, type
+   - Sample: id=12345, title="Building a Hacker News Quality Filter", score=250
+
+2. mock_comment
+   - HN comment dict with: id, by, text, time, kids, parent, type, deleted, dead
+   - Sample: id=12346, by="bob_engineer", parent=12345
+
+3. mock_expert_comment
+   - Comment with practitioner markers ("I built", code blocks)
+   - Sample: id=12351, includes Python code block and expertise signals
+
+4. mock_user_profile
+   - Firebase user dict with: id, karma, created, about, submitted
+   - Sample: id="alice_dev", karma=5000, submitted=[12345, 12346, ...]
+
+5. mock_algolia_response
+   - Algolia search API response with hits array
+   - Sample: 2 hits with author, comment_text, created_at_i, objectID, etc.
+
+6. sample_profile_json
+   - Valid profile.json content as JSON string
+   - Contains: keywords, experts, min_score, weights
+
+7. sample_trust_graph
+   - 5-user trust matrix (A, B, C, D, E)
+   - Seed experts: [A, B]
+   - Edges: A→C, B→C, C→D, D→E
+   - Expected trust scores: A=0.4, B=0.4, C=0.15, D=0.04, E=0.01
+
+8. tmp_profile_dir
+   - Temporary directory fixture using pytest's tmp_path
+
+### 3. SIGNALS_SCHEMA Constant ✓
+
+Defined and exported:
+```python
+SIGNALS_SCHEMA = {
+    "practitioner_depth": {"score": float, "markers": list},
+    "velocity": {"score": float, "points_per_hour": float},
+    "reference_density": {"score": float, "link_count": int},
+    "thread_depth": {"score": float, "max_depth": int},
+    "expert_involvement": {"score": float, "experts": list, "trust_scores": dict}
+}
+```
+
+### 4. Verification Results ✓
+
+✓ pytest --fixtures shows all 8 fixtures discoverable
+✓ SIGNALS_SCHEMA importable: from tests.conftest import SIGNALS_SCHEMA
+✓ All fixtures return non-None values
+✓ conftest.py syntax valid (py_compile check passed)
+✓ Test files collected: 0 items (expected - stubs only)
+✓ Evidence saved to .sisyphus/evidence/task-2-fixtures.txt
+
+## Acceptance Criteria Met
+
+✓ tests/ directory created with __init__.py
+✓ tests/conftest.py with 8 fixtures (all implemented)
+✓ SIGNALS_SCHEMA constant defined and exported
+✓ Empty test file stubs created (6 files)
+✓ pytest --collect-only discovers all fixtures
+✓ Evidence saved to .sisyphus/evidence/task-2-fixtures.txt
+
+## Notes
+
+- All fixtures use realistic HN API data structures from plan
+- Fixtures are importable and callable
+- No actual tests written (as required)
+- No live API calls (all mock data)
+- Trust graph includes hand-calculated EigenTrust scores
+- Module docstrings and fixture docstrings included for clarity

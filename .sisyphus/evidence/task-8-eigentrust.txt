@@ -1,0 +1,17 @@
+Task 8 - EigenTrust verification
+Date: 2026-03-10
+
+Command:
+pytest tests/test_trust.py::test_eigentrust_basic -v
+
+Result:
+PASSED
+
+Command:
+pytest tests/test_trust.py::test_eigentrust_seed_highest -v
+
+Result:
+PASSED
+
+Observed ranking on sample_trust_graph:
+A == B > C > D > E

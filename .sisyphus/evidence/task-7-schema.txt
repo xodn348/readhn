@@ -1,0 +1,11 @@
+Scenario: Signals schema is correct
+Test: tests/test_quality.py::test_full_signals_schema
+Result: PASSED
+Evidence:
+- calculate_signals output keys match SIGNALS_SCHEMA keys
+- Each signal sub-dict includes required fields:
+  practitioner_depth(score, markers)
+  velocity(score, points_per_hour)
+  reference_density(score, link_count)
+  thread_depth(score, max_depth)
+  expert_involvement(score, experts, trust_scores)

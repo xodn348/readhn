@@ -1,0 +1,47 @@
+=== TASK 4: pyproject.toml Update - Installation Evidence ===
+
+## 1. Dev Install Test
+Command: pip install -e ".[dev]"
+Result: SUCCESS
+- fastmcp>=2.0.0 installed (3.1.0)
+- httpx>=0.24.0 already satisfied
+- pytest-cov>=4.0.0 installed
+- respx>=0.20.0 installed
+- time-machine>=2.0.0 installed
+- black>=23.0.0 already satisfied
+- ruff>=0.1.0 installed
+
+Verification: python -c "import respx; import time_machine; print('OK')"
+Output: OK ✓
+
+## 2. Base Install Test
+Command: pip install -e .
+Result: SUCCESS
+- hnmcp-0.2.0 installed
+- No optional dependencies installed
+
+Verification: python -c "import hnmcp; print('OK')"
+Output: OK ✓
+
+## 3. Embeddings Optional Dependency Test
+Command: python -c "import sentence_transformers"
+Result: FAILED (as expected)
+- sentence-transformers NOT installed in base install ✓
+- Embeddings are truly optional
+
+## 4. pyproject.toml Changes
+✓ Version bumped to 0.2.0
+✓ fastmcp>=2.0.0 (was >=0.1.0)
+✓ Entry point changed to hnmcp.server:main (was hnmcp:mcp.run)
+✓ Optional dependencies added:
+  - embeddings: sentence-transformers>=2.0.0
+  - dev: pytest-cov, respx, time-machine (added to existing)
+✓ pytest config: asyncio_mode = "auto" (already present)
+
+## Summary
+All acceptance criteria met:
+- [x] pip install -e ".[dev]" succeeds
+- [x] pip install -e . does NOT install sentence-transformers
+- [x] Version is 0.2.0
+- [x] Entry point is hnmcp.server:main
+- [x] pytest config has asyncio_mode = "auto"

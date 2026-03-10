@@ -1,0 +1,73 @@
+hnmcp - LLM Context Guide
+
+Project purpose
+- hnmcp is an AI-native HackerNews MCP server.
+- It helps agents retrieve relevant HN stories/comments, evaluate source trust, and return explainable outputs.
+- It is designed for agent workflows (query -> tool call -> structured reasoning), not feed browsing.
+
+Architecture: 3 primitives
+1) Discover
+- Find relevant stories/comments by keyword, score, and time window.
+- Uses filtering and ranking signals so results match user intent instead of raw popularity.
+
+2) Trust
+- Estimate author credibility from interaction patterns and seed experts.
+- Uses EigenTrust-style propagation over reply graphs to surface reliable voices.
+
+3) Understand
+- Return explainable quality/trust signals with outputs.
+- Emphasizes "why this result" via structured signal breakdowns.
+
+Module responsibilities
+- hnmcp/cache.py
+  - Async TTL cache with per-key lock deduplication (`get_or_fetch`).
+  - Shared caching primitive for network/model-heavy operations.
+
+- hnmcp/profiles.py
+  - Loads user profile from JSON or environment fallback.
+  - Handles keywords, experts, thresholds, and quality weights.
+
+- hnmcp/quality.py
+  - Computes explainable quality signals (practitioner depth, velocity, references, thread depth, expert involvement).
+  - Produces weighted quality score from signals.
+
+- hnmcp/trust.py
+  - Builds author reply graph from comments.
+  - Runs EigenTrust-like iteration and persists trust cache.
+
+- hnmcp/embeddings.py
+  - Optional semantic similarity layer via sentence-transformers.
+  - Lazy-loads embedding model and caches vectors; no hard dependency unless feature is used.
+
+- hnmcp/server.py
+  - FastMCP server entry point (tools/resources wiring).
+  - Currently placeholder; implementation should orchestrate Discover/Trust/Understand modules.
+
+Key design decisions
+- TDD-first development (tests define behavior before implementation).
+- EigenTrust-inspired trust propagation for expert credibility.
+- Optional embeddings dependency (install extras only when needed).
+- Python 3.9+ compatibility requirement.
+- Keep implementation lightweight (no NumPy required in core path).
+
+Quick navigation for AI agents
+- Start here for project overview: README.md
+- Core package: hnmcp/
+  - Cache + concurrency: hnmcp/cache.py
+  - User config/profile loading: hnmcp/profiles.py
+  - Quality scoring/explainability: hnmcp/quality.py
+  - Trust graph + EigenTrust: hnmcp/trust.py
+  - Optional embeddings search: hnmcp/embeddings.py
+  - MCP tool/resource integration point: hnmcp/server.py
+- Behavioral specs/tests: tests/
+  - tests/test_cache.py
+  - tests/test_profiles.py
+  - tests/test_quality.py
+  - tests/test_trust.py
+  - tests/test_embeddings.py
+  - tests/test_server.py
+
+Agent implementation notes
+- Prefer async for all external I/O boundaries.
+- Preserve explainable outputs (signals + rationale), not opaque scores.
+- Reuse cache/trust/quality primitives instead of re-implementing logic in server layer.

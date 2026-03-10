@@ -1,0 +1,165 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.2, pytest-9.0.2, pluggy-1.6.0
+rootdir: /Users/jnnj92/hnmcp
+configfile: pyproject.toml
+plugins: anyio-4.12.1, mock-3.15.1, asyncio-1.3.0, langsmith-0.6.6
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 0 items
+cache -- .../_pytest/cacheprovider.py:566
+    Return a cache object that can persist state between testing sessions.
+
+capsys -- .../_pytest/capture.py:1000
+    Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+capteesys -- .../_pytest/capture.py:1028
+    Enable simultaneous text capturing and pass-through of writes
+    to ``sys.stdout`` and ``sys.stderr`` as defined by ``--capture=``.
+
+capsysbinary -- .../_pytest/capture.py:1063
+    Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.
+
+capfd -- .../_pytest/capture.py:1091
+    Enable text capturing of writes to file descriptors ``1`` and ``2``.
+
+capfdbinary -- .../_pytest/capture.py:1119
+    Enable bytes capturing of writes to file descriptors ``1`` and ``2``.
+
+doctest_namespace [session scope] -- .../_pytest/doctest.py:722
+    Fixture that returns a :py:class:`dict` that will be injected into the
+    namespace of doctests.
+
+pytestconfig [session scope] -- .../_pytest/fixtures.py:1431
+    Session-scoped fixture that returns the session's :class:`pytest.Config`
+    object.
+
+record_property -- .../_pytest/junitxml.py:277
+    Add extra properties to the calling test.
+
+record_xml_attribute -- .../_pytest/junitxml.py:300
+    Add extra xml attributes to the tag for the calling test.
+
+record_testsuite_property [session scope] -- .../_pytest/junitxml.py:338
+    Record a new ``<property>`` tag as child of the root ``<testsuite>``.
+
+tmpdir_factory [session scope] -- .../_pytest/legacypath.py:298
+    Return a :class:`pytest.TempdirFactory` instance for the test session.
+
+tmpdir -- .../_pytest/legacypath.py:305
+    Return a temporary directory (as `legacy_path`_ object)
+    which is unique to each test function invocation.
+    The temporary directory is created as a subdirectory
+    of the base temporary directory, with configurable retention,
+    as discussed in :ref:`temporary directory location and retention`.
+
+caplog -- .../_pytest/logging.py:596
+    Access and control log capturing.
+
+monkeypatch -- .../_pytest/monkeypatch.py:33
+    A convenient fixture for monkey-patching.
+
+recwarn -- .../_pytest/recwarn.py:34
+    Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
+
+subtests -- .../_pytest/subtests.py:129
+    Provides subtests functionality.
+
+tmp_path_factory [session scope] -- .../_pytest/tmpdir.py:243
+    Return a :class:`pytest.TempPathFactory` instance for the test session.
+
+tmp_path -- .../_pytest/tmpdir.py:258
+    Return a temporary directory (as :class:`pathlib.Path` object)
+    which is unique to each test function invocation.
+    The temporary directory is created as a subdirectory
+    of the base temporary directory, with configurable retention,
+    as discussed in :ref:`temporary directory location and retention`.
+
+
+------------------ fixtures defined from anyio.pytest_plugin -------------------
+anyio_backend [module scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/anyio/pytest_plugin.py:204
+    no docstring available
+
+anyio_backend_name -- ../../../opt/anaconda3/lib/python3.12/site-packages/anyio/pytest_plugin.py:209
+    no docstring available
+
+anyio_backend_options -- ../../../opt/anaconda3/lib/python3.12/site-packages/anyio/pytest_plugin.py:217
+    no docstring available
+
+free_tcp_port_factory [session scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/anyio/pytest_plugin.py:286
+    no docstring available
+
+free_udp_port_factory [session scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/anyio/pytest_plugin.py:291
+    no docstring available
+
+free_tcp_port -- ../../../opt/anaconda3/lib/python3.12/site-packages/anyio/pytest_plugin.py:296
+    no docstring available
+
+free_udp_port -- ../../../opt/anaconda3/lib/python3.12/site-packages/anyio/pytest_plugin.py:301
+    no docstring available
+
+
+----------------- fixtures defined from pytest_asyncio.plugin ------------------
+event_loop_policy [session scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_asyncio/plugin.py:834
+    Return an instance of the policy used to create asyncio event loops.
+
+unused_tcp_port -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_asyncio/plugin.py:852
+    no docstring available
+
+unused_udp_port -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_asyncio/plugin.py:857
+    no docstring available
+
+unused_tcp_port_factory [session scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_asyncio/plugin.py:862
+    A factory function, producing different unused TCP ports.
+
+unused_udp_port_factory [session scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_asyncio/plugin.py:881
+    A factory function, producing different unused UDP ports.
+
+
+------------------- fixtures defined from pytest_mock.plugin -------------------
+class_mocker [class scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_mock/plugin.py:463
+    Return an object that has the same interface to the `mock` module, but
+    takes care of automatically undoing all patches after each test method.
+
+mocker -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_mock/plugin.py:463
+    Return an object that has the same interface to the `mock` module, but
+    takes care of automatically undoing all patches after each test method.
+
+module_mocker [module scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_mock/plugin.py:463
+    Return an object that has the same interface to the `mock` module, but
+    takes care of automatically undoing all patches after each test method.
+
+package_mocker [package scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_mock/plugin.py:463
+    Return an object that has the same interface to the `mock` module, but
+    takes care of automatically undoing all patches after each test method.
+
+session_mocker [session scope] -- ../../../opt/anaconda3/lib/python3.12/site-packages/pytest_mock/plugin.py:463
+    Return an object that has the same interface to the `mock` module, but
+    takes care of automatically undoing all patches after each test method.
+
+
+--------------------- fixtures defined from tests.conftest ---------------------
+mock_user_profile -- tests/conftest.py:116
+    Sample Firebase user profile dict.
+
+mock_algolia_response -- tests/conftest.py:137
+    Sample Algolia search API response.
+
+sample_profile_json -- tests/conftest.py:181
+    Valid profile.json content as JSON string.
+
+sample_trust_graph -- tests/conftest.py:208
+    5-user trust matrix with hand-calculated EigenTrust scores.
+
+tmp_profile_dir -- tests/conftest.py:233
+    Temporary directory fixture for profile.json testing.
+
+mock_story -- tests/conftest.py:33
+    Sample HN story dict matching Firebase API response shape.
+
+mock_comment -- tests/conftest.py:59
+    Sample HN comment dict matching Firebase API response shape.
+
+mock_expert_comment -- tests/conftest.py:84
+    Sample HN comment with practitioner markers (expertise signals).
+
+
+============================ no tests ran in 0.01s =============================

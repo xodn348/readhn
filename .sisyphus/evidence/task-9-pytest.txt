@@ -1,0 +1,10 @@
+Command: pytest tests/test_embeddings.py -v
+Result: PASSED
+
+tests/test_embeddings.py::test_import_without_deps PASSED
+tests/test_embeddings.py::test_embed_text PASSED
+tests/test_embeddings.py::test_find_similar PASSED
+tests/test_embeddings.py::test_session_only PASSED
+tests/test_embeddings.py::test_graceful_degradation PASSED
+
+Summary: 5 passed in 0.02s

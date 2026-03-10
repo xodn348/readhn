@@ -1,0 +1,6 @@
+Scenario: Practitioner comment gets high score
+Test: tests/test_quality.py::test_practitioner_markers_detected
+Result: PASSED
+Evidence:
+- detect_practitioner_markers("I built...") returns matched strings including "i built"
+- calculate_signals(...)["practitioner_depth"]["score"] > 0.0
