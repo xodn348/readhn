@@ -51,10 +51,10 @@ The agent calls readhn tools, gets results with quality signals, and explains wh
 ### Configuration (Optional)
 
 ```bash
-export HN_KEYWORDS="ai,python,startups"    # Default filter keywords
-export HN_MIN_SCORE="50"                   # Minimum story score
-export HN_EXPERTS="patio11,tptacek,simonw" # Seed experts for trust
-export HN_TIME_HOURS="24"                  # Time window
+export HN_KEYWORDS="ai,llm,rust,distributed-systems,databases"  # Default filter keywords
+export HN_MIN_SCORE="50"                                         # Minimum story score
+export HN_EXPERTS="tptacek,simonw,antirez,ept,jepsen"           # Seed experts for trust
+export HN_TIME_HOURS="24"                                        # Time window
 ```
 
 ## How It Works

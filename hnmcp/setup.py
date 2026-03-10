@@ -17,8 +17,8 @@ AGENTS = {
     "OpenCode": {"config_key": "mcp", "format": "opencode"},
 }
 
-DEFAULT_EXPERTS = ["patio11", "tptacek", "simonw"]
-DEFAULT_KEYWORDS = ["ai", "python", "startups"]
+DEFAULT_EXPERTS = ["tptacek", "simonw", "antirez", "ept", "jepsen"]
+DEFAULT_KEYWORDS = ["ai", "llm", "rust", "distributed-systems", "databases"]
 
 
 def _get_config_paths(agent: str) -> list[Path]:
