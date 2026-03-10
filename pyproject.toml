@@ -51,7 +51,7 @@ Repository = "https://github.com/xodn348/HNmcp"
 Issues = "https://github.com/xodn348/HNmcp/issues"
 
 [project.scripts]
-readhn = "hnmcp.server:main"
+readhn = "hnmcp.cli:main"
 
 [tool.black]
 line-length = 100
