@@ -2,13 +2,10 @@
 
 <!-- mcp-name: io.github.xodn348/readhn -->
 
-[![PyPI version](https://badge.fury.io/py/readhn.svg)](https://pypi.org/project/readhn/)
-[![Python](https://img.shields.io/pypi/pyversions/readhn.svg)](https://pypi.org/project/readhn/)
+[![PyPI](https://badge.fury.io/py/readhn.svg)](https://pypi.org/project/readhn/)
 [![Tests](https://img.shields.io/badge/tests-82%20passed-brightgreen)](https://github.com/xodn348/HNmcp)
 [![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)](https://github.com/xodn348/HNmcp)
 [![MCP](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/v0.1/servers?search=readhn)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Downloads](https://img.shields.io/pypi/dm/readhn)](https://pypi.org/project/readhn/)
 
 AI-native HackerNews MCP Server. Find HN content that matters with explainable quality signals.
 
