@@ -25,11 +25,11 @@
 - Confirmed cache integration by asserting repeated `discover_stories` invocations hit Firebase routes once via `respx` call counters.
 - Documented error resilience behavior: partial results are returned when some item fetches fail, while direct failed brief requests include HTTP error context.
 - Validated deleted/dead comments are filtered in recursive subtree fetch and do not appear in `story_brief` output.
-## QA Check Results (Tue Mar 10 12:56:17 CDT 2026)
+## QA Check Results (Tue Mar 10 19:33:00 CDT 2026)
 
 ### Test Coverage: ✅ PASS
-- Coverage: 91.22% (target: 90%)
-- Tests passed: 82/82
+- Coverage: 100.00% (target: 90%)
+- Tests passed: 199/199
 - Excluded: hnmcp/__main__.py (subprocess entry point)
 
 ### Server Startup: ✅ PASS
@@ -53,10 +53,9 @@
 
 ### Coverage Breakdown
 - cache.py: 100%
-- embeddings.py: 92%
-- profiles.py: 97%
-- quality.py: 99%
-- trust.py: 95%
-- server.py: 87%
-- Overall: 91.22%
-
+- embeddings.py: 100%
+- profiles.py: 100%
+- quality.py: 100%
+- trust.py: 100%
+- server.py: 100%
+- Overall: 100.00%
