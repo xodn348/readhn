@@ -135,3 +135,21 @@ def test_profile_reload(tmp_profile_dir: Path) -> None:
     assert first.keywords == ["ai"]
     assert second.keywords == ["rust"]
     assert second.min_score == 99
+
+
+def test_profile_non_dict_json_returns_defaults(tmp_profile_dir: Path) -> None:
+    profile_file = tmp_profile_dir / "profile.json"
+    profile_file.write_text("[]", encoding="utf-8")
+
+    profile = load_profile(path=str(profile_file))
+
+    assert profile == Profile()
+
+
+def test_profile_parse_int_invalid_type_falls_back(tmp_profile_dir: Path) -> None:
+    profile_file = tmp_profile_dir / "profile.json"
+    profile_file.write_text('{"min_score": {"bad": true}}', encoding="utf-8")
+
+    profile = load_profile(path=str(profile_file))
+
+    assert profile.min_score == 0

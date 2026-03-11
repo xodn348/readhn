@@ -279,9 +279,7 @@ def _build_comment_depth_map(story_id: int, comments: List[Dict[str, Any]]) -> D
                 continue
             parent_depth = depth_map.get(parent_id)
             if parent_depth is None:
-                if parent_id == story_id:
-                    parent_depth = 0
-                elif parent_id not in comment_by_id:
+                if parent_id not in comment_by_id:
                     parent_depth = 0
                 else:
                     continue

@@ -38,8 +38,6 @@ def build_reply_graph(comments: Sequence[Mapping[str, object]]) -> dict[str, dic
         if parent_author is None or parent_author == author:
             continue
 
-        if parent_author not in graph:
-            graph[parent_author] = {}
         if author not in graph:
             graph[author] = {}
         graph[parent_author][author] = graph[parent_author].get(author, 0) + 1

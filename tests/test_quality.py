@@ -208,3 +208,26 @@ def test_quality_score_zero_weights() -> None:
     )
 
     assert quality == 0.0
+
+
+def test_quality_score_returns_zero_when_all_weights_negative() -> None:
+    signals = {
+        "practitioner_depth": {"score": 0.5},
+        "velocity": {"score": 0.5},
+        "reference_density": {"score": 0.5},
+        "thread_depth": {"score": 0.5},
+        "expert_involvement": {"score": 0.5},
+    }
+
+    quality = calculate_quality_score(
+        signals,
+        {
+            "practitioner_depth": -1.0,
+            "velocity": -1.0,
+            "reference_density": -1.0,
+            "thread_depth": -1.0,
+            "expert_involvement": -1.0,
+        },
+    )
+
+    assert quality == 0.0

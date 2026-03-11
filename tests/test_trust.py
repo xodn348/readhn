@@ -200,3 +200,49 @@ def test_load_trust_cache_invalid_structure(tmp_path: Path) -> None:
     invalid_structure = tmp_path / "invalid_structure.json"
     invalid_structure.write_text('["not", "a", "dict"]', encoding="utf-8")
     assert load_trust_cache(str(invalid_structure)) is None
+
+
+def test_build_reply_graph_creates_missing_author_nodes() -> None:
+    comments = [
+        {"id": 1, "by": "root", "parent": 0},
+        {"id": 2, "by": "child", "parent": 1},
+        {"id": 3, "by": "grandchild", "parent": 2},
+    ]
+
+    graph = build_reply_graph(comments)
+
+    assert "root" in graph
+    assert "child" in graph
+    assert "grandchild" in graph
+
+
+def test_build_reply_graph_adds_nodes_for_invalid_id_comments() -> None:
+    comments = [
+        {"id": 1, "by": "root", "parent": 0},
+        {"id": "bad", "by": "late_user", "parent": 1},
+    ]
+
+    graph = build_reply_graph(comments)
+
+    assert "root" in graph
+    assert "late_user" in graph
+
+
+def test_eigentrust_handles_no_users() -> None:
+    assert compute_eigentrust({}, []) == {}
+
+
+def test_eigentrust_without_valid_seeds_uses_uniform_pretrust() -> None:
+    trust_scores = compute_eigentrust({"a": {"b": 1}, "b": {}}, ["missing"])
+
+    assert set(trust_scores.keys()) == {"a", "b", "missing"}
+    assert abs(sum(trust_scores.values()) - 1.0) < 1e-6
+
+
+def test_load_trust_cache_skips_non_numeric_scores(tmp_path: Path) -> None:
+    cache_file = tmp_path / "trust.json"
+    cache_file.write_text('{"alice": "oops", "bob": "0.5"}', encoding="utf-8")
+
+    loaded = load_trust_cache(str(cache_file))
+
+    assert loaded == {"bob": 0.5}

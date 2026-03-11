@@ -159,3 +159,33 @@ def test_embed_text_caching(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result1 == result2
     assert call_count == 1
+
+
+def test_get_model_uses_cached_model() -> None:
+    embeddings = _reload_embeddings_module()
+
+    class FakeModel:
+        def encode(self, texts: list[str], normalize_embeddings: bool = True) -> list[list[float]]:
+            return [[1.0]]
+
+    embeddings._model = FakeModel()
+    assert embeddings._get_model() is embeddings._model
+
+
+def test_get_model_loads_sentence_transformer(monkeypatch: pytest.MonkeyPatch) -> None:
+    embeddings = _reload_embeddings_module()
+
+    class FakeModel:
+        def encode(self, texts: list[str], normalize_embeddings: bool = True) -> list[list[float]]:
+            return [[1.0]]
+
+    class FakeModule:
+        def __init__(self) -> None:
+            self.SentenceTransformer = lambda _name: FakeModel()
+
+    monkeypatch.setattr(embeddings.importlib, "import_module", lambda _name: FakeModule())
+    embeddings._model = None
+
+    loaded = embeddings._get_model()
+
+    assert isinstance(loaded, FakeModel)
