@@ -3,7 +3,7 @@
   "name": "io.github.xodn348/readhn",
   "description": "AI-native HackerNews MCP Server. Find HN content that matters with explainable quality signals.",
   "repository": {
-    "url": "https://github.com/xodn348/HNmcp",
+    "url": "https://github.com/xodn348/readhn",
     "source": "github"
   },
   "version": "0.2.0",

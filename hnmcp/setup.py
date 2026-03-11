@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -10,8 +11,10 @@ from typing import Any, Optional
 
 
 AGENTS = {
-    "Claude Desktop": {"config_key": "mcpServers", "format": "claude"},
+    "Claude Code": {"config_key": "mcpServers", "format": "claude"},
+    "Codex": {"config_key": "mcp_servers", "format": "toml"},
     "Cursor": {"config_key": "mcpServers", "format": "claude"},
+    "Claude Desktop": {"config_key": "mcpServers", "format": "claude"},
     "Cline": {"config_key": "mcpServers", "format": "claude"},
     "Windsurf": {"config_key": "mcpServers", "format": "claude"},
     "OpenCode": {"config_key": "mcp", "format": "opencode"},
@@ -25,6 +28,12 @@ def _get_config_paths(agent: str) -> list[Path]:
     home = Path.home()
     is_macos = sys.platform == "darwin"
     is_windows = sys.platform == "win32"
+
+    if agent == "Claude Code":
+        return [home / ".claude.json"]
+
+    if agent == "Codex":
+        return [home / ".codex/config.toml"]
 
     if agent == "Claude Desktop":
         if is_macos:
@@ -91,6 +100,57 @@ def load_config(path: Path) -> dict[str, Any]:
     return data
 
 
+def _toml_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _build_readhn_toml(experts: list[str], keywords: list[str]) -> str:
+    return "\n".join(
+        [
+            "[mcp_servers.readhn]",
+            'command = "python"',
+            'args = ["-m", "hnmcp"]',
+            "",
+            "[mcp_servers.readhn.env]",
+            f'HN_EXPERTS = "{_toml_escape(",".join(experts))}"',
+            f'HN_KEYWORDS = "{_toml_escape(",".join(keywords))}"',
+            "",
+        ]
+    )
+
+
+def _remove_readhn_toml_sections(content: str) -> str:
+    patterns = [
+        r"(?ms)^\[mcp_servers\.readhn\]\n.*?(?=^\[|\Z)",
+        r"(?ms)^\[mcp_servers\.readhn\.env\]\n.*?(?=^\[|\Z)",
+    ]
+    updated = content
+    for pattern in patterns:
+        updated = re.sub(pattern, "", updated)
+    return updated.rstrip() + "\n" if updated.strip() else ""
+
+
+def _read_toml_config(path: Path) -> str:
+    if not path.exists():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), prefix=path.name)
+    try:
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.replace(tmp_name, path)
+    finally:
+        if os.path.exists(tmp_name):
+            os.unlink(tmp_name)
+
+
 def deep_merge(target: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
     for key, value in source.items():
         if key in target and isinstance(target[key], dict) and isinstance(value, dict):
@@ -118,6 +178,13 @@ def create_readhn_entry(fmt: str, experts: list[str], keywords: list[str]) -> di
             "type": "local",
             "command": ["python", "-m", "hnmcp"],
             "environment": env,
+        }
+
+    if fmt == "toml":
+        return {
+            "command": "python",
+            "args": ["-m", "hnmcp"],
+            "env": env,
         }
 
     raise ValueError(f"Unsupported format: {fmt}")
@@ -181,6 +248,41 @@ def setup_agent(
     if not isinstance(existing, dict):
         existing = {}
 
+    if fmt == "toml":
+        config_text = _read_toml_config(config_path)
+        has_readhn = "[mcp_servers.readhn]" in config_text
+
+        if has_readhn and not force:
+            print(f"- {agent_name}: readhn already configured, skipping (use --force to overwrite)")
+            return False
+
+        base_text = _remove_readhn_toml_sections(config_text) if force else config_text
+        new_block = _build_readhn_toml(experts, keywords)
+        merged_text = (base_text.rstrip() + "\n\n" if base_text.strip() else "") + new_block
+
+        if dry_run:
+            print(f"- {agent_name}: would update {config_path}")
+            print(merged_text)
+            return True
+
+        backup = backup_config(config_path)
+        if backup is not None:
+            print(f"- {agent_name}: backup created at {backup}")
+
+        try:
+            _atomic_write_text(config_path, merged_text)
+        except OSError as exc:
+            print(f"- {agent_name}: failed to write config: {exc}")
+            return False
+
+        validated = _read_toml_config(config_path)
+        if "[mcp_servers.readhn]" not in validated:
+            print(f"- {agent_name}: write failed validation")
+            return False
+
+        print(f"- {agent_name}: configured at {config_path}")
+        return True
+
     if "readhn" in existing and not force:
         print(f"- {agent_name}: readhn already configured, skipping (use --force to overwrite)")
         return False
@@ -222,7 +324,7 @@ def setup_all(
     detected = detect_installed_agents()
     if not detected:
         print(
-            "No supported AI agents detected. Install one of: Claude Desktop, Cursor, Cline, Windsurf, OpenCode."
+            "No supported AI agents detected. Install one of: Claude Code, Codex, Cursor, Claude Desktop, Cline, Windsurf, OpenCode."
         )
         return 1
 

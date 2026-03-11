@@ -3,8 +3,8 @@
 <!-- mcp-name: io.github.xodn348/readhn -->
 
 [![PyPI](https://badge.fury.io/py/readhn.svg)](https://pypi.org/project/readhn/)
-[![Tests](https://img.shields.io/badge/tests-137%20passed-brightgreen)](https://github.com/xodn348/HNmcp)
-[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)](https://github.com/xodn348/HNmcp)
+[![Tests](https://img.shields.io/badge/tests-137%20passed-brightgreen)](https://github.com/xodn348/readhn)
+[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)](https://github.com/xodn348/readhn)
 [![MCP](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io/v0.1/servers?search=readhn)
 
 AI-native HackerNews MCP Server. Find HN content that matters with explainable quality signals.
@@ -27,7 +27,7 @@ pip install readhn
 readhn setup
 ```
 
-`readhn setup` detects OpenCode, Claude Desktop, Cursor, Cline, and Windsurf config paths and adds the `readhn` MCP server.
+`readhn setup` detects Claude Code, Codex, Cursor, Claude Desktop, Cline, Windsurf, and OpenCode config paths and adds the `readhn` MCP server.
 
 Useful setup flags:
 

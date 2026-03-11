@@ -46,9 +46,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/xodn348/HNmcp"
-Repository = "https://github.com/xodn348/HNmcp"
-Issues = "https://github.com/xodn348/HNmcp/issues"
+Homepage = "https://github.com/xodn348/readhn"
+Repository = "https://github.com/xodn348/readhn"
+Issues = "https://github.com/xodn348/readhn/issues"
 
 [project.scripts]
 readhn = "hnmcp.cli:main"

@@ -1,6 +1,7 @@
 import json
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 from hnmcp.setup import (
     DEFAULT_EXPERTS,
@@ -29,6 +30,24 @@ def test_get_config_paths_macos_claude_desktop(monkeypatch) -> None:
     assert paths == [
         Path("/Users/test/Library/Application Support/Claude/claude_desktop_config.json")
     ]
+
+
+def test_get_config_paths_macos_claude_code(monkeypatch) -> None:
+    monkeypatch.setattr("sys.platform", "darwin")
+    monkeypatch.setattr("hnmcp.setup.Path.home", lambda: Path("/Users/test"))
+
+    paths = _get_config_paths("Claude Code")
+
+    assert paths == [Path("/Users/test/.claude.json")]
+
+
+def test_get_config_paths_macos_codex(monkeypatch) -> None:
+    monkeypatch.setattr("sys.platform", "darwin")
+    monkeypatch.setattr("hnmcp.setup.Path.home", lambda: Path("/Users/test"))
+
+    paths = _get_config_paths("Codex")
+
+    assert paths == [Path("/Users/test/.codex/config.toml")]
 
 
 def test_get_config_paths_macos_cursor(monkeypatch) -> None:
@@ -93,6 +112,60 @@ def test_get_config_paths_windows_uses_appdata(monkeypatch) -> None:
 
     assert str(paths[0]).endswith("Claude/claude_desktop_config.json")
     assert "Roaming" in str(paths[0])
+
+
+def test_get_config_paths_linux_claude_desktop_uses_xdg(monkeypatch) -> None:
+    monkeypatch.setattr("sys.platform", "linux")
+    monkeypatch.setenv("XDG_CONFIG_HOME", "/xdg")
+    monkeypatch.setattr("hnmcp.setup.Path.home", lambda: Path("/home/test"))
+
+    paths = _get_config_paths("Claude Desktop")
+
+    assert paths == [
+        Path("/xdg/Claude/claude_desktop_config.json"),
+        Path("/home/test/.config/Claude/claude_desktop_config.json"),
+    ]
+
+
+def test_get_config_paths_windows_cline_uses_appdata(monkeypatch) -> None:
+    monkeypatch.setattr("sys.platform", "win32")
+    monkeypatch.setenv("APPDATA", r"C:\\Users\\test\\AppData\\Roaming")
+    monkeypatch.setattr("hnmcp.setup.Path.home", lambda: Path("C:/Users/test"))
+
+    paths = _get_config_paths("Cline")
+
+    assert str(paths[0]).endswith("Cline/mcp_settings.json")
+    assert "Roaming" in str(paths[0])
+
+
+def test_get_config_paths_linux_cline_uses_xdg(monkeypatch) -> None:
+    monkeypatch.setattr("sys.platform", "linux")
+    monkeypatch.setenv("XDG_CONFIG_HOME", "/xdg")
+    monkeypatch.setattr("hnmcp.setup.Path.home", lambda: Path("/home/test"))
+
+    paths = _get_config_paths("Cline")
+
+    assert paths == [
+        Path("/xdg/cline/mcp_settings.json"),
+        Path("/home/test/.config/cline/mcp_settings.json"),
+    ]
+
+
+def test_get_config_paths_windows_opencode_uses_appdata(monkeypatch) -> None:
+    monkeypatch.setattr("sys.platform", "win32")
+    monkeypatch.setenv("APPDATA", r"C:\\Users\\test\\AppData\\Roaming")
+    monkeypatch.setattr("hnmcp.setup.Path.home", lambda: Path("C:/Users/test"))
+
+    paths = _get_config_paths("OpenCode")
+
+    assert str(paths[0]).endswith("opencode/config.json")
+    assert "Roaming" in str(paths[0])
+
+
+def test_get_config_paths_unknown_agent_returns_empty(monkeypatch) -> None:
+    monkeypatch.setattr("hnmcp.setup.Path.home", lambda: Path("/Users/test"))
+
+    assert _get_config_paths("Unknown") == []
 
 
 def test_detect_installed_agents_detects_existing_config(monkeypatch, tmp_path: Path) -> None:
@@ -190,6 +263,21 @@ def test_load_config_reads_valid_json_dict(tmp_path: Path) -> None:
     assert load_config(path) == {"mcpServers": {"x": {}}}
 
 
+def test_read_toml_config_returns_empty_on_missing(tmp_path: Path) -> None:
+    from hnmcp.setup import _read_toml_config
+
+    assert _read_toml_config(tmp_path / "missing.toml") == ""
+
+
+def test_read_toml_config_returns_empty_on_oserror(tmp_path: Path) -> None:
+    from hnmcp.setup import _read_toml_config
+
+    path = tmp_path / "config.toml"
+    path.write_text("x=1\n", encoding="utf-8")
+    with patch.object(Path, "read_text", side_effect=OSError("boom")):
+        assert _read_toml_config(path) == ""
+
+
 def test_deep_merge_recursively_merges_nested_dicts() -> None:
     target = {"a": {"x": 1, "y": 2}, "b": 1}
     source = {"a": {"y": 3, "z": 4}, "c": 2}
@@ -240,6 +328,14 @@ def test_create_readhn_entry_opencode_format_shape() -> None:
     assert entry["type"] == "local"
     assert entry["command"] == ["python", "-m", "hnmcp"]
     assert entry["environment"] == {"HN_EXPERTS": "tptacek", "HN_KEYWORDS": "startups"}
+
+
+def test_create_readhn_entry_toml_format_shape() -> None:
+    entry = create_readhn_entry("toml", ["tptacek"], ["rust", "databases"])
+
+    assert entry["command"] == "python"
+    assert entry["args"] == ["-m", "hnmcp"]
+    assert entry["env"] == {"HN_EXPERTS": "tptacek", "HN_KEYWORDS": "rust,databases"}
 
 
 def test_create_readhn_entry_handles_empty_lists() -> None:
@@ -329,6 +425,46 @@ def test_atomic_write_config_keeps_parent_clean_of_temp_files(tmp_path: Path) ->
     assert leftovers == []
 
 
+def test_atomic_write_config_cleans_temp_on_replace_failure(monkeypatch, tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+
+    def _boom(_src: str, _dst: Path) -> None:
+        raise OSError("replace failed")
+
+    monkeypatch.setattr("hnmcp.setup.os.replace", _boom)
+
+    try:
+        atomic_write_config(path, {"x": 1})
+    except OSError:
+        pass
+    else:
+        raise AssertionError("Expected OSError")
+
+    leftovers = [p for p in path.parent.iterdir() if p.name.startswith("config.json")]
+    assert leftovers == []
+
+
+def test_atomic_write_text_cleans_temp_on_replace_failure(monkeypatch, tmp_path: Path) -> None:
+    from hnmcp.setup import _atomic_write_text
+
+    path = tmp_path / "config.toml"
+
+    def _boom(_src: str, _dst: Path) -> None:
+        raise OSError("replace failed")
+
+    monkeypatch.setattr("hnmcp.setup.os.replace", _boom)
+
+    try:
+        _atomic_write_text(path, "x=1\n")
+    except OSError:
+        pass
+    else:
+        raise AssertionError("Expected OSError")
+
+    leftovers = [p for p in path.parent.iterdir() if p.name.startswith("config.toml")]
+    assert leftovers == []
+
+
 def test_atomic_write_config_creates_parent_directories(tmp_path: Path) -> None:
     path = tmp_path / "nested" / "dir" / "config.json"
 
@@ -413,6 +549,18 @@ def test_setup_agent_writes_opencode_shape(tmp_path: Path) -> None:
     assert data["mcp"]["readhn"]["type"] == "local"
 
 
+def test_setup_agent_handles_non_dict_existing_config_key(tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text('{"mcpServers": []}', encoding="utf-8")
+
+    modified = setup_agent("Cursor", config, ["alice"], ["ai"], force=False, dry_run=False)
+
+    data = json.loads(config.read_text(encoding="utf-8"))
+    assert modified is True
+    assert isinstance(data["mcpServers"], dict)
+    assert "readhn" in data["mcpServers"]
+
+
 def test_setup_agent_is_idempotent_without_force(tmp_path: Path) -> None:
     config = tmp_path / "config.json"
     config.write_text("{}", encoding="utf-8")
@@ -422,6 +570,121 @@ def test_setup_agent_is_idempotent_without_force(tmp_path: Path) -> None:
 
     assert first is True
     assert second is False
+
+
+def test_setup_agent_writes_codex_toml_shape(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text('model = "gpt-5"\n', encoding="utf-8")
+
+    modified = setup_agent("Codex", config, ["alice"], ["ai", "llm"], force=False, dry_run=False)
+
+    data = config.read_text(encoding="utf-8")
+    assert modified is True
+    assert "[mcp_servers.readhn]" in data
+    assert 'command = "python"' in data
+    assert 'args = ["-m", "hnmcp"]' in data
+    assert "[mcp_servers.readhn.env]" in data
+    assert 'HN_EXPERTS = "alice"' in data
+    assert 'HN_KEYWORDS = "ai,llm"' in data
+
+
+def test_setup_agent_codex_force_replaces_existing_block(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text(
+        "\n".join(
+            [
+                'model = "gpt-5"',
+                "",
+                "[mcp_servers.readhn]",
+                'command = "old"',
+                'args = ["-m", "old"]',
+                "",
+                "[mcp_servers.readhn.env]",
+                'HN_EXPERTS = "old"',
+                'HN_KEYWORDS = "old"',
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    modified = setup_agent("Codex", config, ["bob"], ["rust"], force=True, dry_run=False)
+
+    data = config.read_text(encoding="utf-8")
+    assert modified is True
+    assert data.count("[mcp_servers.readhn]") == 1
+    assert 'command = "python"' in data
+    assert 'HN_EXPERTS = "bob"' in data
+    assert 'HN_KEYWORDS = "rust"' in data
+
+
+def test_setup_agent_codex_skip_when_exists_without_force(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text('[mcp_servers.readhn]\ncommand = "python"\n', encoding="utf-8")
+
+    modified = setup_agent("Codex", config, ["bob"], ["rust"], force=False, dry_run=False)
+
+    assert modified is False
+
+
+def test_setup_agent_codex_dry_run(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text('model = "gpt-5"\n', encoding="utf-8")
+
+    modified = setup_agent("Codex", config, ["alice"], ["ai"], force=False, dry_run=True)
+
+    assert modified is True
+    assert config.read_text(encoding="utf-8") == 'model = "gpt-5"\n'
+
+
+def test_setup_agent_codex_write_failure(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text('model = "gpt-5"\n', encoding="utf-8")
+
+    def _boom(_path: Path, _content: str) -> None:
+        raise OSError("write failed")
+
+    monkeypatch.setattr("hnmcp.setup._atomic_write_text", _boom)
+
+    modified = setup_agent("Codex", config, ["alice"], ["ai"], force=False, dry_run=False)
+
+    assert modified is False
+
+
+def test_setup_agent_codex_validation_failure(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text('model = "gpt-5"\n', encoding="utf-8")
+
+    monkeypatch.setattr("hnmcp.setup._read_toml_config", lambda _p: "")
+
+    modified = setup_agent("Codex", config, ["alice"], ["ai"], force=False, dry_run=False)
+
+    assert modified is False
+
+
+def test_setup_agent_json_write_failure(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text("{}", encoding="utf-8")
+
+    def _boom(_path: Path, _data: dict[str, object]) -> None:
+        raise OSError("write failed")
+
+    monkeypatch.setattr("hnmcp.setup.atomic_write_config", _boom)
+
+    modified = setup_agent("Cursor", config, ["alice"], ["ai"], force=False, dry_run=False)
+
+    assert modified is False
+
+
+def test_setup_agent_json_validation_failure(monkeypatch, tmp_path: Path) -> None:
+    config = tmp_path / "config.json"
+    config.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr("hnmcp.setup.load_config", lambda _p: {})
+
+    modified = setup_agent("Cursor", config, ["alice"], ["ai"], force=False, dry_run=False)
+
+    assert modified is False
 
 
 def test_setup_all_returns_one_when_no_agents(monkeypatch) -> None:
@@ -451,6 +714,15 @@ def test_setup_all_filters_requested_agents(monkeypatch, tmp_path: Path) -> None
 
     assert code == 0
     assert calls == ["Cursor"]
+
+
+def test_setup_all_returns_one_when_filter_matches_nothing(monkeypatch, tmp_path: Path) -> None:
+    cursor = tmp_path / "cursor.json"
+    monkeypatch.setattr("hnmcp.setup.detect_installed_agents", lambda: {"Cursor": cursor})
+
+    code = setup_all(["OpenCode"], ["a"], ["b"], force=False, dry_run=False)
+
+    assert code == 1
 
 
 def test_setup_all_prompts_when_values_missing(monkeypatch, tmp_path: Path) -> None:
@@ -498,6 +770,15 @@ def test_main_list_flag_prints_agents_and_exits(monkeypatch, tmp_path: Path, cap
     setup_main()
     output = capsys.readouterr().out
     assert "Cursor" in output
+
+
+def test_main_list_flag_prints_none_when_empty(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("hnmcp.setup.detect_installed_agents", lambda: {})
+    monkeypatch.setattr("sys.argv", ["readhn setup", "--list"])
+
+    setup_main()
+    output = capsys.readouterr().out
+    assert "No supported AI agents detected." in output
 
 
 def test_main_parses_agents_experts_keywords(monkeypatch) -> None:
